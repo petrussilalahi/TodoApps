@@ -3,7 +3,7 @@ import {Text, SafeAreaView, StyleSheet, TouchableOpacity} from 'react-native';
 import FingerprintScanner from 'react-native-fingerprint-scanner';
 import Colors from '../../styles/Colors';
 
-const AuthScreen = () => {
+const AuthScreen = props => {
   const [biometryType, setBiometryType] = useState(null);
 
   useEffect(() => {
@@ -28,7 +28,7 @@ const AuthScreen = () => {
         description: getMessage(),
       })
         .then(() => {
-          //you can write your logic here to what will happen on successful authentication
+          props.navigation.replace('Home');
         })
         .catch(error => {
           console.log('Authentication error is => ', error);

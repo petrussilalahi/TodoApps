@@ -83,7 +83,7 @@ const Home = ({navigation}) => {
 
   function removeTask(item) {
     setAnimationState('zoom');
-    dispatch({type: 'REMOVE_TODO', payload: item});
+    dispatch({type: 'REMOVE_TODO', payload: item.id});
   }
 
   const renderToDoList = ({item}) => (

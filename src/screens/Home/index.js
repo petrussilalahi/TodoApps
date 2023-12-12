@@ -52,7 +52,6 @@ const Home = ({navigation}) => {
         };
         dispatch({type: 'ADD_TODO', payload: newTask});
         setModalVisible(false);
-        setAnimationState('bounce');
       }
     }
   }
@@ -68,10 +67,8 @@ const Home = ({navigation}) => {
       });
       dispatch({type: 'IS_COMPLETED', payload: newList});
       navigation.navigate('Completed');
-      setAnimationState('zoom');
     } else {
       dispatch({type: 'REMOVE_TODO', payload: task.id});
-      setAnimationState('zoomOut');
     }
   }
 
@@ -82,7 +79,6 @@ const Home = ({navigation}) => {
   }
 
   function removeTask(item) {
-    setAnimationState('zoom');
     dispatch({type: 'REMOVE_TODO', payload: item.id});
   }
 

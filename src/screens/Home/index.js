@@ -1,14 +1,24 @@
 import React, {useState} from 'react';
-import {Text, View, StyleSheet, FlatList, Alert} from 'react-native';
+import {Text, View, StyleSheet, FlatList, Alert, Animated} from 'react-native';
 import AddTaskModal from '../../components/AddTaskModal';
 import FloatingButton from '../../components/FloatingButton';
 import TaskCard from '../../components/TaskCard';
-import Colors from '../../styles/Colors';
-import Fonts from '../../styles/Fonts';
+import {useDispatch, useSelector} from 'react-redux';
+import {styles} from './styles';
 
-const Home = () => {
+const Home = ({navigation}) => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [toDoList, setToDoList] = useState([]);
+  const [isUpdate, setIsUpdate] = useState(false);
+  const [dataUpdate, setDataUpdate] = useState({});
+  const [animationState, setAnimationState] = useState('zoom');
+
+  // useSelector
+  const toDoListRedux = useSelector(state =>
+    state.todos.filter(todo => !todo.isCompleted),
+  );
+
+  // dispatch
+  const dispatch = useDispatch();
 
   function handleModalVisible() {
     setModalVisible(!modalVisible);
@@ -16,7 +26,7 @@ const Home = () => {
 
   function addTask(taskContent) {
     const taskContentCheck = taskContent.trim().toLowerCase();
-    const checkDublicate = toDoList.find(
+    const checkDublicate = toDoListRedux.find(
       todo => todo.task.trim().toLowerCase() === taskContentCheck,
     );
     if (taskContentCheck === '') {
@@ -24,65 +34,81 @@ const Home = () => {
     } else {
       if (checkDublicate) {
         Alert.alert('Opps...', 'You have already added this task. ');
+      } else if (isUpdate) {
+        const newList = toDoListRedux.map(todo => {
+          if (todo.id === dataUpdate.id) {
+            todo.task = taskContent;
+          }
+          return todo;
+        });
+        dispatch({type: 'UPDATE_TODO', payload: newList});
+        setIsUpdate(false);
+        setModalVisible(false);
       } else {
         const newTask = {
-          id: toDoList.length + 1,
+          id: toDoListRedux.length + 1,
           task: taskContent,
           isCompleted: false,
         };
-        setToDoList(oldTasks => [...oldTasks, newTask]);
+        dispatch({type: 'ADD_TODO', payload: newTask});
         setModalVisible(false);
+        setAnimationState('bounce');
       }
     }
   }
 
-  function deleteTask(task) {
+  function isCompletedTask(task) {
     if (task.isCompleted === false) {
-      const newList = toDoList.map(todo => {
+      setAnimationState('bounce');
+      const newList = toDoListRedux.map(todo => {
         if (todo.id === task.id) {
           todo.isCompleted = true;
         }
         return todo;
       });
-      setToDoList(newList);
+      dispatch({type: 'IS_COMPLETED', payload: newList});
+      navigation.navigate('Completed');
+      setAnimationState('zoom');
     } else {
-      setToDoList(toDoList.filter(item => item.id !== task.id));
+      dispatch({type: 'REMOVE_TODO', payload: task.id});
+      setAnimationState('zoomOut');
     }
+  }
+
+  function updateTask(item) {
+    setIsUpdate(true);
+    handleModalVisible();
+    setDataUpdate(item);
+  }
+
+  function removeTask(item) {
+    setAnimationState('zoom');
+    dispatch({type: 'REMOVE_TODO', payload: item});
   }
 
   const renderToDoList = ({item}) => (
     <TaskCard
       item={item}
       isCompleted={item.isCompleted}
-      onDelete={() => deleteTask(item)}
+      onCompleted={() => isCompletedTask(item)}
+      onUpdate={() => updateTask(item)}
+      onDeleted={() => removeTask(item)}
+      animated={animationState}
     />
   );
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>My To Do List</Text>
-      <FlatList data={toDoList} renderItem={renderToDoList} />
+      <FlatList data={toDoListRedux} renderItem={renderToDoList} />
       <FloatingButton onPress={handleModalVisible} />
       <AddTaskModal
         isVisible={modalVisible}
         onClose={handleModalVisible}
         onAddTask={addTask}
+        isUpdated={isUpdate}
       />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.defaultDarkColor,
-    flex: 1,
-    padding: 10,
-  },
-  title: {
-    color: Colors.defaultTitleColor,
-    fontFamily: Fonts.defaultRegularFontFamily,
-    fontSize: 25,
-  },
-});
 
 export default Home;
